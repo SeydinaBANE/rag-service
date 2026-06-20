@@ -27,6 +27,9 @@ class RerankerProvider(StrEnum):
     COHERE = "cohere"
 
 
+_VALID_LOG_LEVELS = frozenset({"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"})
+
+
 class Settings(BaseSettings):
     """Environment-driven configuration (prefix APP_).
 
@@ -42,6 +45,8 @@ class Settings(BaseSettings):
     retry_attempts: int = 2
     allowed_locales: list[str] = Field(default_factory=lambda: ["en", "fr"])
     max_recipient_length: int = 128
+    log_level: str = "INFO"
+    log_json: bool = True
 
     embedder_provider: EmbedderProvider = EmbedderProvider.FAKE
     generator_provider: GeneratorProvider = GeneratorProvider.FAKE
@@ -67,6 +72,10 @@ class Settings(BaseSettings):
             raise ValueError("APP_GREETER_PROVIDER=http requires APP_GREETER_BASE_URL.")
         if self.request_timeout <= 0:
             raise ValueError("APP_REQUEST_TIMEOUT must be positive.")
+        if self.log_level.upper() not in _VALID_LOG_LEVELS:
+            raise ValueError(
+                f"APP_LOG_LEVEL must be one of {sorted(_VALID_LOG_LEVELS)}."
+            )
         self._validate_rag()
         return self
 

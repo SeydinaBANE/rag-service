@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
@@ -9,6 +11,9 @@ from pydantic import BaseModel, Field
 
 from app.container import Container, build_container
 from app.domain.models import Document, DomainError, Greeting, RagAnswer
+from app.logging import configure_logging, get_logger
+
+_logger = get_logger("app.api.request")
 
 
 class IndexRequest(BaseModel):
@@ -34,7 +39,9 @@ _SECURITY_HEADERS: dict[str, str] = {
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    app.state.container = build_container()
+    container = build_container()
+    configure_logging(container.settings.log_level, container.settings.log_json)
+    app.state.container = container
     yield
 
 
@@ -53,6 +60,31 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         for header, value in _SECURITY_HEADERS.items():
             response.headers.setdefault(header, value)
+        return response
+
+    @app.middleware("http")
+    async def _request_logger(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
+        request_id = uuid.uuid4().hex
+        start = time.perf_counter()
+        log_context: dict[str, object] = {
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+        }
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            _logger.exception("request_failed", extra={**log_context, "duration_ms": duration_ms})
+            raise
+        duration_ms = round((time.perf_counter() - start) * 1000, 2)
+        response.headers["X-Request-ID"] = request_id
+        _logger.info(
+            "request",
+            extra={**log_context, "status_code": response.status_code, "duration_ms": duration_ms},
+        )
         return response
 
     @app.exception_handler(DomainError)

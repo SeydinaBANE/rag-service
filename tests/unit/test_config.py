@@ -48,3 +48,8 @@ def test_settings_cohere_without_key_fails_fast(monkeypatch):
     monkeypatch.delenv("CO_API_KEY", raising=False)
     with pytest.raises(ValueError, match="COHERE_API_KEY"):
         Settings(reranker_provider=RerankerProvider.COHERE, cohere_api_key="")
+
+
+def test_settings_invalid_log_level_fails_fast():
+    with pytest.raises(ValueError, match="LOG_LEVEL"):
+        Settings(log_level="verbose")

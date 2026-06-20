@@ -48,6 +48,7 @@ Conventions clés pour étendre ce code :
 - **Config fail-fast** : `Settings._validate_production_safety` (un `@model_validator` pydantic) refuse de démarrer sur des combinaisons non sûres (ex. `provider=http` sans base URL). Ajouter les nouveaux invariants ici, pas dans les handlers de requêtes.
 - **Flux d'erreurs** : les erreurs métier sont des sous-classes de `DomainError` levées dans `domain`/`services`, attrapées dans `api/app.py` via `@app.exception_handler(DomainError)` → 422. Ne pas attraper les erreurs domaine en cours de chaîne.
 - **Câblage de la DI** : le `lifespan` FastAPI construit le `Container` une seule fois dans `app.state.container` ; les handlers le lisent via `get_container(request)`. Les appels sortants passent par `RetryPolicy` / `retry_call` (`adapters/retry.py`).
+- **Logs** : logger structuré JSON via `app.logging` (`get_logger(name)`), jamais `print`. `configure_logging` est appelé une fois dans le `lifespan` à partir de `APP_LOG_LEVEL` / `APP_LOG_JSON`. Un middleware HTTP journalise chaque requête (`request_id`, méthode, **path seul** — pas de query/body pour éviter la PII, status, durée) et pose l'en-tête `X-Request-ID`. Passer le contexte structuré via `extra={...}`.
 
 ## Pipeline RAG
 
