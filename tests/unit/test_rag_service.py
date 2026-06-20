@@ -1,6 +1,6 @@
 import pytest
 
-from app.adapters.fakes import FakeEmbedder, FakeGenerator, InMemoryVectorStore
+from app.adapters.fakes import FakeEmbedder, FakeGenerator, FakeReranker, InMemoryVectorStore
 from app.domain.models import Document, EmptyCorpusError, EmptyQueryError
 from app.services.rag import RagService
 
@@ -9,9 +9,11 @@ def _service() -> RagService:
     return RagService(
         embedder=FakeEmbedder(dimensions=256),
         vector_store=InMemoryVectorStore(),
+        reranker=FakeReranker(),
         generator=FakeGenerator(),
         chunk_size=64,
         chunk_overlap=8,
+        candidate_k=10,
         top_k=2,
     )
 

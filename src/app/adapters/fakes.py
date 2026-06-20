@@ -97,6 +97,22 @@ class InMemoryVectorStore:
         return len(self._chunks)
 
 
+def _word_overlap(query: str, text: str) -> int:
+    return len(set(query.lower().split()) & set(text.lower().split()))
+
+
+class FakeReranker:
+    """Deterministic RerankerPort used by default and in tests.
+
+    Reorders chunks by word overlap with the query and keeps the top ``top_n``.
+    Stable sort preserves the original order on ties. Zero I/O.
+    """
+
+    def rerank(self, query: str, chunks: list[Chunk], top_n: int) -> list[Chunk]:
+        ranked = sorted(chunks, key=lambda chunk: _word_overlap(query, chunk.text), reverse=True)
+        return ranked[:top_n]
+
+
 class FakeGenerator:
     """Deterministic GeneratorPort used by default and in tests.
 

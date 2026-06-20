@@ -3,14 +3,28 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.adapters.claude_generator import ClaudeGenerator
-from app.adapters.fakes import FakeEmbedder, FakeGenerator, FakeGreeter, InMemoryVectorStore
+from app.adapters.cohere_reranker import CohereReranker
+from app.adapters.fakes import (
+    FakeEmbedder,
+    FakeGenerator,
+    FakeGreeter,
+    FakeReranker,
+    InMemoryVectorStore,
+)
 from app.adapters.http_greeter import HttpGreeter
 from app.adapters.retry import RetryPolicy
 from app.adapters.voyage_embedder import VoyageEmbedder
-from app.config import EmbedderProvider, GeneratorProvider, GreeterProvider, Settings
+from app.config import (
+    EmbedderProvider,
+    GeneratorProvider,
+    GreeterProvider,
+    RerankerProvider,
+    Settings,
+)
 from app.ports.embedder import EmbedderPort
 from app.ports.generator import GeneratorPort
 from app.ports.greeter import GreeterPort
+from app.ports.reranker import RerankerPort
 from app.ports.vector_store import VectorStorePort
 from app.services.greeting import GreetingService
 from app.services.rag import RagService
@@ -46,13 +60,26 @@ def build_generator(settings: Settings) -> GeneratorPort:
     return FakeGenerator()
 
 
+def build_reranker(settings: Settings) -> RerankerPort:
+    if settings.reranker_provider is RerankerProvider.COHERE:
+        return CohereReranker(
+            api_key=settings.cohere_api_key,
+            model=settings.rerank_model,
+            timeout=settings.request_timeout,
+            retry=RetryPolicy(attempts=settings.retry_attempts),
+        )
+    return FakeReranker()
+
+
 def build_rag(settings: Settings) -> RagService:
     return RagService(
         embedder=build_embedder(settings),
         vector_store=build_vector_store(settings),
+        reranker=build_reranker(settings),
         generator=build_generator(settings),
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
+        candidate_k=settings.retrieval_candidates,
         top_k=settings.retrieval_top_k,
     )
 

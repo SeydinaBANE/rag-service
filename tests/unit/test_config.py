@@ -1,6 +1,12 @@
 import pytest
 
-from app.config import EmbedderProvider, GeneratorProvider, GreeterProvider, Settings
+from app.config import (
+    EmbedderProvider,
+    GeneratorProvider,
+    GreeterProvider,
+    RerankerProvider,
+    Settings,
+)
 
 
 def test_settings_defaults_boot_offline():
@@ -36,3 +42,9 @@ def test_settings_claude_without_key_fails_fast(monkeypatch):
 def test_settings_invalid_chunk_overlap_fails_fast():
     with pytest.raises(ValueError, match="CHUNK_OVERLAP"):
         Settings(chunk_size=10, chunk_overlap=10)
+
+
+def test_settings_cohere_without_key_fails_fast(monkeypatch):
+    monkeypatch.delenv("CO_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="COHERE_API_KEY"):
+        Settings(reranker_provider=RerankerProvider.COHERE, cohere_api_key="")

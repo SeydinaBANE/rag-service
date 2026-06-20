@@ -30,9 +30,10 @@ branch in `container.py` — nothing else changes.
 
 ## RAG
 
-Retrieval-augmented generation follows the same hexagonal pattern: three ports
-(`EmbedderPort`, `VectorStorePort`, `GeneratorPort`), in-memory/deterministic fakes by
-default, real adapters behind a lazy SDK import.
+Retrieval-augmented generation follows the same hexagonal pattern: four ports
+(`EmbedderPort`, `VectorStorePort`, `RerankerPort`, `GeneratorPort`), in-memory/deterministic
+fakes by default, real adapters behind a lazy SDK import. The query pipeline is
+retrieve (candidate pool) → rerank → generate.
 
 ```
 POST /rag/index   {"documents": [{"doc_id": "d1", "text": "..."}]}  -> {"indexed_chunks": N}
@@ -45,6 +46,8 @@ backends, install the extra (`uv sync --extra rag`) and switch providers:
 - `APP_EMBEDDER_PROVIDER=voyage` + `APP_VOYAGE_API_KEY` — embeddings via Voyage AI.
 - `APP_GENERATOR_PROVIDER=claude` + `APP_ANTHROPIC_API_KEY` — generation via Claude
   (`claude-opus-4-8` by default), using the official `anthropic` SDK.
+- `APP_RERANKER_PROVIDER=cohere` + `APP_COHERE_API_KEY` — reranking via Cohere
+  (`rerank-v3.5` by default).
 
 The vector store ships as an in-memory cosine index; swap in pgvector/Qdrant by adding an
 adapter and branching in `build_vector_store`.

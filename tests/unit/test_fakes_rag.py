@@ -1,6 +1,6 @@
 import math
 
-from app.adapters.fakes import FakeEmbedder, FakeGenerator, InMemoryVectorStore
+from app.adapters.fakes import FakeEmbedder, FakeGenerator, FakeReranker, InMemoryVectorStore
 from app.domain.models import Chunk
 
 
@@ -45,6 +45,26 @@ def test_in_memory_vector_store_rejects_length_mismatch():
         assert "same length" in str(exc)
     else:  # pragma: no cover - guard
         raise AssertionError("expected ValueError")
+
+
+def test_fake_reranker_orders_by_word_overlap():
+    reranker = FakeReranker()
+    chunks = [
+        _chunk("a", "unrelated content about weather"),
+        _chunk("b", "python web framework guide"),
+    ]
+    ranked = reranker.rerank("python framework", chunks, top_n=2)
+    assert ranked[0].chunk_id == "b"
+
+
+def test_fake_reranker_truncates_to_top_n():
+    reranker = FakeReranker()
+    chunks = [_chunk("a", "x"), _chunk("b", "y"), _chunk("c", "z")]
+    assert len(reranker.rerank("q", chunks, top_n=1)) == 1
+
+
+def test_fake_reranker_handles_empty_chunks():
+    assert FakeReranker().rerank("q", [], top_n=3) == []
 
 
 def test_fake_generator_grounds_answer_in_context():

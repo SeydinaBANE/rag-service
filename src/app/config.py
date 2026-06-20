@@ -22,6 +22,11 @@ class GeneratorProvider(StrEnum):
     CLAUDE = "claude"
 
 
+class RerankerProvider(StrEnum):
+    FAKE = "fake"
+    COHERE = "cohere"
+
+
 class Settings(BaseSettings):
     """Environment-driven configuration (prefix APP_).
 
@@ -40,15 +45,19 @@ class Settings(BaseSettings):
 
     embedder_provider: EmbedderProvider = EmbedderProvider.FAKE
     generator_provider: GeneratorProvider = GeneratorProvider.FAKE
+    reranker_provider: RerankerProvider = RerankerProvider.FAKE
     embedding_dimensions: int = 256
     chunk_size: int = 512
     chunk_overlap: int = 64
+    retrieval_candidates: int = 20
     retrieval_top_k: int = 4
     voyage_api_key: str = ""
     voyage_model: str = "voyage-3"
     anthropic_api_key: str = ""
     generator_model: str = "claude-opus-4-8"
     generator_max_tokens: int = 1024
+    cohere_api_key: str = ""
+    rerank_model: str = "rerank-v3.5"
 
     @model_validator(mode="after")
     def _validate_production_safety(self) -> Settings:
@@ -70,6 +79,8 @@ class Settings(BaseSettings):
             raise ValueError("APP_CHUNK_OVERLAP must be in [0, APP_CHUNK_SIZE).")
         if self.retrieval_top_k <= 0:
             raise ValueError("APP_RETRIEVAL_TOP_K must be positive.")
+        if self.retrieval_candidates <= 0:
+            raise ValueError("APP_RETRIEVAL_CANDIDATES must be positive.")
         if self.embedder_provider is EmbedderProvider.VOYAGE and not (
             self.voyage_api_key or os.getenv("VOYAGE_API_KEY")
         ):
@@ -78,3 +89,7 @@ class Settings(BaseSettings):
             self.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
         ):
             raise ValueError("APP_GENERATOR_PROVIDER=claude requires APP_ANTHROPIC_API_KEY.")
+        if self.reranker_provider is RerankerProvider.COHERE and not (
+            self.cohere_api_key or os.getenv("CO_API_KEY")
+        ):
+            raise ValueError("APP_RERANKER_PROVIDER=cohere requires APP_COHERE_API_KEY.")

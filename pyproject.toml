@@ -16,6 +16,7 @@ dependencies = [
 rag = [
     "anthropic>=0.69",
     "voyageai>=0.3",
+    "cohere>=5.13",
 ]
 dev = [
     "ruff>=0.5",
@@ -60,7 +61,7 @@ packages = ["app"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["anthropic.*", "voyageai.*"]
+module = ["anthropic.*", "voyageai.*", "cohere.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
