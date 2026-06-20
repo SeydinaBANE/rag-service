@@ -42,7 +42,12 @@ def build_greeter(settings: Settings) -> GreeterPort:
 
 def build_embedder(settings: Settings) -> EmbedderPort:
     if settings.embedder_provider is EmbedderProvider.VOYAGE:
-        return VoyageEmbedder(api_key=settings.voyage_api_key, model=settings.voyage_model)
+        return VoyageEmbedder(
+            api_key=settings.voyage_api_key,
+            model=settings.voyage_model,
+            timeout=settings.request_timeout,
+            retry=RetryPolicy(attempts=settings.retry_attempts),
+        )
     return FakeEmbedder(dimensions=settings.embedding_dimensions)
 
 
@@ -56,6 +61,8 @@ def build_generator(settings: Settings) -> GeneratorPort:
             api_key=settings.anthropic_api_key,
             model=settings.generator_model,
             max_tokens=settings.generator_max_tokens,
+            timeout=settings.request_timeout,
+            retry=RetryPolicy(attempts=settings.retry_attempts),
         )
     return FakeGenerator()
 

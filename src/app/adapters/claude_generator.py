@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.adapters.retry import RetryPolicy, retry_call
 from app.domain.models import Chunk
 
 _SYSTEM = (
@@ -26,23 +27,42 @@ class ClaudeGenerator:
 
     The SDK (``anthropic``) is imported lazily inside ``generate``, never at
     module top level, so the package stays importable without the optional
-    dependency. An empty ``api_key`` falls back to the SDK's environment
-    resolution (``ANTHROPIC_API_KEY``).
+    dependency. The outbound call carries a timeout and a bounded backoff retry
+    (the SDK's own retries are disabled so the project's ``RetryPolicy`` governs
+    them). An empty ``api_key`` falls back to the SDK's environment resolution
+    (``ANTHROPIC_API_KEY``).
     """
 
-    def __init__(self, api_key: str, model: str, max_tokens: int) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        max_tokens: int,
+        timeout: float,
+        retry: RetryPolicy,
+    ) -> None:
         self._api_key = api_key
         self._model = model
         self._max_tokens = max_tokens
+        self._timeout = timeout
+        self._retry = retry
 
     def generate(self, question: str, context: list[Chunk]) -> str:
         import anthropic
 
-        client = anthropic.Anthropic(api_key=self._api_key or None)
-        response: Any = client.messages.create(
-            model=self._model,
-            max_tokens=self._max_tokens,
-            system=_SYSTEM,
-            messages=[{"role": "user", "content": _build_prompt(question, context)}],
+        client = anthropic.Anthropic(
+            api_key=self._api_key or None,
+            timeout=self._timeout,
+            max_retries=0,
         )
-        return "".join(block.text for block in response.content if block.type == "text")
+
+        def _call() -> str:
+            response: Any = client.messages.create(
+                model=self._model,
+                max_tokens=self._max_tokens,
+                system=_SYSTEM,
+                messages=[{"role": "user", "content": _build_prompt(question, context)}],
+            )
+            return "".join(block.text for block in response.content if block.type == "text")
+
+        return retry_call(_call, self._retry)
