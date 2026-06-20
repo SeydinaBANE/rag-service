@@ -73,9 +73,7 @@ class Settings(BaseSettings):
         if self.request_timeout <= 0:
             raise ValueError("APP_REQUEST_TIMEOUT must be positive.")
         if self.log_level.upper() not in _VALID_LOG_LEVELS:
-            raise ValueError(
-                f"APP_LOG_LEVEL must be one of {sorted(_VALID_LOG_LEVELS)}."
-            )
+            raise ValueError(f"APP_LOG_LEVEL must be one of {sorted(_VALID_LOG_LEVELS)}.")
         self._validate_rag()
         return self
 
