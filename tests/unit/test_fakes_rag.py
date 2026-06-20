@@ -37,6 +37,10 @@ def test_in_memory_vector_store_ranks_by_similarity():
     assert results[0].score >= results[1].score
 
 
+def test_in_memory_vector_store_reports_ready():
+    assert InMemoryVectorStore().ready() is True
+
+
 def test_in_memory_vector_store_rejects_length_mismatch():
     store = InMemoryVectorStore()
     try:

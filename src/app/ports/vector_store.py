@@ -18,3 +18,12 @@ class VectorStorePort(Protocol):
     def search(self, query: Vector, top_k: int) -> list[ScoredChunk]: ...
 
     def count(self) -> int: ...
+
+    def ready(self) -> bool:
+        """Cheap reachability check for the readiness probe.
+
+        Must not raise: implementations catch their own connection errors and
+        return ``False`` when the backend is unreachable. A real adapter
+        (pgvector, Qdrant) issues a lightweight ping (e.g. ``SELECT 1``).
+        """
+        ...

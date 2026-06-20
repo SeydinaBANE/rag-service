@@ -96,6 +96,9 @@ class InMemoryVectorStore:
     def count(self) -> int:
         return len(self._chunks)
 
+    def ready(self) -> bool:
+        return True
+
 
 def _word_overlap(query: str, text: str) -> int:
     return len(set(query.lower().split()) & set(text.lower().split()))

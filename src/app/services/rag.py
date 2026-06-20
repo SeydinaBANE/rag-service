@@ -37,6 +37,9 @@ class RagService:
         self._candidate_k = candidate_k
         self._top_k = top_k
 
+    def ready(self) -> bool:
+        return self._vector_store.ready()
+
     def index(self, documents: list[Document]) -> int:
         chunks = [
             Chunk(

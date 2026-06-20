@@ -29,6 +29,13 @@ def test_readyz_ready():
     assert response.json() == {"status": "ready"}
 
 
+def test_readyz_returns_503_when_dependency_unready(monkeypatch):
+    monkeypatch.setattr("app.services.rag.RagService.ready", lambda self: False)
+    with TestClient(app) as client:
+        response = client.get("/readyz")
+    assert response.status_code == 503
+
+
 def test_greet_nominal():
     with TestClient(app) as client:
         response = client.get("/greet", params={"recipient": "Ada", "locale": "fr"})

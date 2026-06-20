@@ -50,6 +50,29 @@ def test_answer_empty_corpus_raises():
         _service().answer("anything")
 
 
+def test_ready_true_with_reachable_store():
+    assert _service().ready() is True
+
+
+class _UnreadyStore(InMemoryVectorStore):
+    def ready(self) -> bool:
+        return False
+
+
+def test_ready_false_when_store_unreachable():
+    service = RagService(
+        embedder=FakeEmbedder(dimensions=8),
+        vector_store=_UnreadyStore(),
+        reranker=FakeReranker(),
+        generator=FakeGenerator(),
+        chunk_size=64,
+        chunk_overlap=8,
+        candidate_k=10,
+        top_k=2,
+    )
+    assert service.ready() is False
+
+
 def test_answer_respects_top_k_override():
     service = _service()
     service.index(

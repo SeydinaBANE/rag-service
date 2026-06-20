@@ -98,7 +98,7 @@ def create_app() -> FastAPI:
     @app.get("/readyz")
     async def readyz(request: Request) -> dict[str, str]:
         container = get_container(request)
-        if not container.settings.allowed_locales:
+        if not container.rag.ready():
             raise HTTPException(status_code=503, detail="not ready")
         return {"status": "ready"}
 
