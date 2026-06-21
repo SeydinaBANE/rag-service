@@ -23,6 +23,7 @@ from app.config import (
     Settings,
     get_settings,
 )
+from app.governance import IdempotencyGuard
 from app.ports.embedder import EmbedderPort
 from app.ports.generator import GeneratorPort
 from app.ports.greeter import GreeterPort
@@ -110,6 +111,7 @@ class Container:
     settings: Settings
     greeting: GreetingService
     rag: RagService
+    index_idempotency: IdempotencyGuard
 
 
 def build_container(settings: Settings | None = None) -> Container:
@@ -119,4 +121,5 @@ def build_container(settings: Settings | None = None) -> Container:
         settings=resolved,
         greeting=GreetingService(greeter),
         rag=build_rag(resolved),
+        index_idempotency=IdempotencyGuard(),
     )

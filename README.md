@@ -50,6 +50,9 @@ POST /rag/index   {"documents": [{"doc_id": "d1", "text": "..."}]}  -> {"indexed
 POST /rag/query   {"question": "...", "top_k": 4}                   -> {"answer": "...", "sources": [...]}
 ```
 
+`/rag/index` accepts an optional `Idempotency-Key` header; replaying the same key is a no-op
+(`indexed_chunks: 0`), preventing duplicate chunks on retried indexing.
+
 Offline by default (`APP_EMBEDDER_PROVIDER=fake`, `APP_GENERATOR_PROVIDER=fake`). For real
 backends, install the extra (`uv sync --extra rag`) and switch providers:
 

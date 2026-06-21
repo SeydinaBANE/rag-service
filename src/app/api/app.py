@@ -5,7 +5,7 @@ import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -112,8 +112,14 @@ def create_app() -> FastAPI:
         return container.greeting.build_greeting(recipient, locale)
 
     @app.post("/rag/index", response_model=IndexResponse)
-    async def rag_index(request: Request, body: IndexRequest) -> IndexResponse:
+    async def rag_index(
+        request: Request,
+        body: IndexRequest,
+        idempotency_key: str | None = Header(default=None),
+    ) -> IndexResponse:
         container = get_container(request)
+        if idempotency_key is not None and not container.index_idempotency.is_new(idempotency_key):
+            return IndexResponse(indexed_chunks=0)
         indexed = container.rag.index(body.documents)
         return IndexResponse(indexed_chunks=indexed)
 
