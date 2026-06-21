@@ -15,7 +15,7 @@ make install     # uv sync --extra dev + pre-commit install (ajouter --extra rag
 make lint        # ruff check + ruff format --check src tests (miroir du CI)
 make format      # ruff format + ruff check --fix
 make typecheck   # mypy strict (config dans pyproject [tool.mypy], cible le package "app")
-make test        # pytest + seuil de couverture (échoue en dessous de 75 %)
+make test        # pytest + seuil de couverture (échoue en dessous de 80 %)
 make run         # uvicorn app.api.app:app --reload --port 8000
 make precommit   # pre-commit run --all-files
 make load        # k6 run load/k6/load_test.js (l'app doit tourner ; BASE_URL surchargeable)
@@ -73,4 +73,4 @@ Le vector store par défaut est un index cosinus en mémoire (`InMemoryVectorSto
 
 - ruff line-length 100, cible py311 ; le jeu de règles inclut `ANN` (tous les paramètres + retours doivent être annotés). Les tests sont exemptés de `ANN`/`S101`.
 - mypy strict, `disallow_any_generics`, plugin pydantic. Utiliser des types concrets, pas de `Any`/`dict`/`list` nus.
-- Les tests sont dans `tests/unit` et `tests/integration` ; les nommer `test_<fonction>_<cas>`. Chaque adapter a un fake pour garder les tests hors ligne.
+- Les tests sont dans `tests/unit` et `tests/integration` ; les nommer `test_<fonction>_<cas>` (au moins 1 cas nominal + 1 cas d'erreur). Chaque adapter a un fake pour garder les tests hors ligne ; aucun test n'ouvre de socket réseau (réseau simulé par monkeypatch / modules SDK factices). `tests/conftest.py` fournit les fixtures `scripted_generator` (factory de `GeneratorPort` déterministe) et `failing_generator`, plus la fixture autouse qui réinitialise `METRICS`.

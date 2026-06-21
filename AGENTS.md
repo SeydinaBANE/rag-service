@@ -22,7 +22,7 @@ Order before push: `make build` (= lint + typecheck + test). CI runs the same pl
 | `make lint` | `ruff check` + `ruff format --check src tests` |
 | `make format` | `ruff format` + `ruff check --fix src tests` |
 | `make typecheck` | `mypy` (strict + pydantic plugin) |
-| `make test` | `pytest` (asyncio_mode=auto, coverage gate 75%) |
+| `make test` | `pytest` (asyncio_mode=auto, coverage gate 80%) |
 | `make build` | lint + typecheck + test |
 | `make run` | `uvicorn app.api.app:app --reload --port 8000` |
 | `make load` | k6 load test (app must be running) |

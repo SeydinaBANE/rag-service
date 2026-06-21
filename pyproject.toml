@@ -65,7 +65,7 @@ module = ["anthropic.*", "voyageai.*", "cohere.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "-ra -q --cov=app --cov-report=term-missing --cov-fail-under=75"
+addopts = "-ra -q --cov=app --cov-report=term-missing --cov-fail-under=80"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = ["src"]

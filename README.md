@@ -4,7 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 ![Typed: mypy strict](https://img.shields.io/badge/mypy-strict-blue)
-![Coverage gate: 75%](https://img.shields.io/badge/coverage-%E2%89%A575%25-brightgreen)
+![Coverage gate: 80%](https://img.shields.io/badge/coverage-%E2%89%A580%25-brightgreen)
 
 Hexagonal, strictly typed, fail-fast FastAPI service with a retrieval-augmented generation
 pipeline. Runs fully offline by default; real Voyage/Claude/Cohere backends plug in behind
@@ -28,7 +28,7 @@ make init        # uv sync --extra dev + pre-commit install
 make build       # lint + typecheck + test
 make lint        # ruff check + ruff format --check
 make typecheck   # mypy strict
-make test        # pytest + coverage gate (75%)
+make test        # pytest + coverage gate (80%)
 make run         # uvicorn on :8000
 make docker-up   # build + run via docker compose
 make load        # k6 load test (needs the app running)

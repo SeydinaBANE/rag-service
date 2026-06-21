@@ -19,6 +19,6 @@
 
 - [ ] `make lint` OK (ruff check + ruff format --check)
 - [ ] `make typecheck` OK (mypy strict)
-- [ ] `make test` OK (couverture >= 75%)
+- [ ] `make test` OK (couverture >= 80%)
 - [ ] Documentation mise a jour si necessaire (CLAUDE.md / AGENTS.md)
 - [ ] Pas de secret commite
