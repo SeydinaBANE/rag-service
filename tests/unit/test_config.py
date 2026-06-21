@@ -56,6 +56,12 @@ def test_settings_invalid_log_level_fails_fast():
         Settings(log_level="verbose")
 
 
+def test_settings_fallback_claude_without_key_fails_fast(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="GENERATOR_FALLBACK_PROVIDER"):
+        Settings(generator_fallback_provider=GeneratorProvider.CLAUDE, anthropic_api_key="")
+
+
 def test_get_settings_returns_cached_singleton():
     get_settings.cache_clear()
     try:

@@ -11,6 +11,7 @@ from app.adapters.fakes import (
     FakeReranker,
     InMemoryVectorStore,
 )
+from app.adapters.fallback_generator import FallbackGenerator
 from app.adapters.http_greeter import HttpGreeter
 from app.adapters.retry import RetryPolicy
 from app.adapters.voyage_embedder import VoyageEmbedder
@@ -56,16 +57,28 @@ def build_vector_store(settings: Settings) -> VectorStorePort:
     return InMemoryVectorStore()
 
 
-def build_generator(settings: Settings) -> GeneratorPort:
-    if settings.generator_provider is GeneratorProvider.CLAUDE:
+def _build_generator_for(
+    settings: Settings, provider: GeneratorProvider, model: str
+) -> GeneratorPort:
+    if provider is GeneratorProvider.CLAUDE:
         return ClaudeGenerator(
             api_key=settings.anthropic_api_key,
-            model=settings.generator_model,
+            model=model,
             max_tokens=settings.generator_max_tokens,
             timeout=settings.request_timeout,
             retry=RetryPolicy(attempts=settings.retry_attempts),
         )
     return FakeGenerator()
+
+
+def build_generator(settings: Settings) -> GeneratorPort:
+    primary = _build_generator_for(settings, settings.generator_provider, settings.generator_model)
+    if settings.generator_fallback_provider is None:
+        return primary
+    fallback = _build_generator_for(
+        settings, settings.generator_fallback_provider, settings.generator_fallback_model
+    )
+    return FallbackGenerator(primary=primary, fallback=fallback)
 
 
 def build_reranker(settings: Settings) -> RerankerPort:

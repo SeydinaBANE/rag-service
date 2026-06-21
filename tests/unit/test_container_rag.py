@@ -1,6 +1,7 @@
 from app.adapters.claude_generator import ClaudeGenerator, _build_prompt
 from app.adapters.cohere_reranker import CohereReranker
 from app.adapters.fakes import FakeEmbedder, FakeGenerator, FakeReranker, InMemoryVectorStore
+from app.adapters.fallback_generator import FallbackGenerator
 from app.adapters.voyage_embedder import VoyageEmbedder
 from app.config import EmbedderProvider, GeneratorProvider, RerankerProvider, Settings
 from app.container import build_embedder, build_generator, build_reranker, build_vector_store
@@ -23,6 +24,18 @@ def test_build_generator_defaults_to_fake():
 def test_build_generator_claude_when_configured():
     settings = Settings(generator_provider=GeneratorProvider.CLAUDE, anthropic_api_key="sk-test")
     assert isinstance(build_generator(settings), ClaudeGenerator)
+
+
+def test_build_generator_no_fallback_returns_single_generator():
+    assert not isinstance(build_generator(Settings()), FallbackGenerator)
+
+
+def test_build_generator_wraps_with_fallback_when_configured():
+    settings = Settings(
+        generator_provider=GeneratorProvider.FAKE,
+        generator_fallback_provider=GeneratorProvider.FAKE,
+    )
+    assert isinstance(build_generator(settings), FallbackGenerator)
 
 
 def test_build_vector_store_is_in_memory():

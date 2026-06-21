@@ -66,6 +66,8 @@ Providers (tous `fake` par défaut, bascule via env ; nécessitent `uv sync --ex
 
 Le vector store par défaut est un index cosinus en mémoire (`InMemoryVectorStore`) ; pour pgvector/Qdrant, ajouter un adapter et brancher dans `build_vector_store`. Les invariants RAG (dimensions, chunk_size/overlap, top_k, clés API requises selon le provider) sont validés dans `Settings._validate_rag`, appelé par `_validate_production_safety`.
 
+**Résilience du générateur** : si `APP_GENERATOR_FALLBACK_PROVIDER` est défini, `build_generator` enveloppe le générateur primaire dans un `FallbackGenerator` (un adapter `GeneratorPort`) qui retombe sur un second générateur (ex. un modèle Haiku moins cher) en cas d'échec du primaire — la résilience multi-modèle reste dans l'idiome port/adapter, `RagService` est inchangé. Non défini = pas de fallback (comportement par défaut).
+
 ## Conventions imposées par l'outillage
 
 - ruff line-length 100, cible py311 ; le jeu de règles inclut `ANN` (tous les paramètres + retours doivent être annotés). Les tests sont exemptés de `ANN`/`S101`.

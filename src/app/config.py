@@ -62,6 +62,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     generator_model: str = "claude-opus-4-8"
     generator_max_tokens: int = 1024
+    generator_fallback_provider: GeneratorProvider | None = None
+    generator_fallback_model: str = "claude-haiku-4-5-20251001"
     cohere_api_key: str = ""
     rerank_model: str = "rerank-v3.5"
 
@@ -97,6 +99,12 @@ class Settings(BaseSettings):
             self.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
         ):
             raise ValueError("APP_GENERATOR_PROVIDER=claude requires APP_ANTHROPIC_API_KEY.")
+        if self.generator_fallback_provider is GeneratorProvider.CLAUDE and not (
+            self.anthropic_api_key or os.getenv("ANTHROPIC_API_KEY")
+        ):
+            raise ValueError(
+                "APP_GENERATOR_FALLBACK_PROVIDER=claude requires APP_ANTHROPIC_API_KEY."
+            )
         if self.reranker_provider is RerankerProvider.COHERE and not (
             self.cohere_api_key or os.getenv("CO_API_KEY")
         ):
