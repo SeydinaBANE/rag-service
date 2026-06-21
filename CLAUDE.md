@@ -12,7 +12,7 @@ L'outillage repose sur `uv` + un Makefile. Toujours passer par `uv run` (ou les 
 
 ```bash
 make install     # uv sync --extra dev (ajouter --extra rag pour les SDK anthropic/voyage/cohere)
-make lint        # ruff check src tests
+make lint        # ruff check + ruff format --check src tests (miroir du CI)
 make format      # ruff format + ruff check --fix
 make typecheck   # mypy strict (config dans pyproject [tool.mypy], cible le package "app")
 make test        # pytest + seuil de couverture (échoue en dessous de 75 %)
