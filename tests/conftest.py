@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 
 from app.domain.models import Chunk
+from app.middleware import reset_rate_limiter
 from app.observability import METRICS
 
 
@@ -30,10 +31,12 @@ class _FailingGenerator:
 
 
 @pytest.fixture(autouse=True)
-def _reset_metrics():
+def _reset_state():
     METRICS.reset()
+    reset_rate_limiter()
     yield
     METRICS.reset()
+    reset_rate_limiter()
 
 
 @pytest.fixture

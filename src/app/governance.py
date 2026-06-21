@@ -1,8 +1,9 @@
 """Cross-cutting governance: RBAC, PII masking, idempotency and audit.
 
 Applied around business actions: authorize (or deny) by caller role, mask personal
-data in outputs, make writes idempotent, and audit each decision. RBAC and PII masking
-are wired in once an authentication layer provides a ``Principal``.
+data in outputs, make writes idempotent, and audit each decision. RBAC, idempotency
+and audit are wired into the ``/rag/*`` routes (authentication supplies the
+``Principal`` via ``dependencies.get_principal``); PII masking remains unwired.
 """
 
 from __future__ import annotations

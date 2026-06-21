@@ -4,14 +4,19 @@ import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from app.config import get_settings
 from app.container import Container, build_container
+from app.dependencies import get_principal
 from app.domain.models import Document, DomainError, Greeting, RagAnswer
+from app.governance import AccessDeniedError, Permission, Principal
 from app.logging import configure_logging, get_logger
+from app.middleware import setup_rate_limiting
 
 _logger = get_logger("app.api.request")
 
@@ -52,6 +57,12 @@ def get_container(request: Request) -> Container:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="app", lifespan=lifespan)
+    settings = get_settings()
+    setup_rate_limiting(
+        app,
+        max_requests=settings.rate_limit_max_requests,
+        window_sec=settings.rate_limit_window_sec,
+    )
 
     @app.middleware("http")
     async def _security_headers(
@@ -66,7 +77,7 @@ def create_app() -> FastAPI:
     async def _request_logger(
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        request_id = uuid.uuid4().hex
+        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
         start = time.perf_counter()
         log_context: dict[str, object] = {
             "request_id": request_id,
@@ -90,6 +101,10 @@ def create_app() -> FastAPI:
     @app.exception_handler(DomainError)
     async def _domain_error(request: Request, exc: DomainError) -> JSONResponse:
         return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+    @app.exception_handler(AccessDeniedError)
+    async def _access_denied(request: Request, exc: AccessDeniedError) -> JSONResponse:
+        return JSONResponse(status_code=403, content={"detail": str(exc)})
 
     @app.get("/healthz")
     async def healthz() -> dict[str, str]:
@@ -115,17 +130,25 @@ def create_app() -> FastAPI:
     async def rag_index(
         request: Request,
         body: IndexRequest,
-        idempotency_key: str | None = Header(default=None),
+        principal: Annotated[Principal, Depends(get_principal)],
+        idempotency_key: Annotated[str | None, Header()] = None,
     ) -> IndexResponse:
         container = get_container(request)
+        container.rbac.authorize(principal, Permission.WRITE)
+        container.audit.record(principal, action="index", resource="rag", allowed=True)
         if idempotency_key is not None and not container.index_idempotency.is_new(idempotency_key):
             return IndexResponse(indexed_chunks=0)
         indexed = container.rag.index(body.documents)
         return IndexResponse(indexed_chunks=indexed)
 
     @app.post("/rag/query", response_model=RagAnswer)
-    async def rag_query(request: Request, body: QueryRequest) -> RagAnswer:
+    async def rag_query(
+        request: Request,
+        body: QueryRequest,
+        principal: Annotated[Principal, Depends(get_principal)],
+    ) -> RagAnswer:
         container = get_container(request)
+        container.rbac.authorize(principal, Permission.READ)
         return container.rag.answer(body.question, body.top_k)
 
     return app

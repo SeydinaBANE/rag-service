@@ -48,6 +48,21 @@ class Settings(BaseSettings):
     max_recipient_length: int = 128
     log_level: str = "INFO"
     log_json: bool = True
+    api_keys: tuple[str, ...] = Field(
+        default=("dev-key-viewer:viewer", "dev-key-operator:operator"),
+        description="colon-separated key:role pairs; override APP_API_KEYS in production",
+    )
+    rate_limit_max_requests: int = 60
+    rate_limit_window_sec: int = 60
+
+    @property
+    def api_key_mapping(self) -> dict[str, str]:
+        mapping: dict[str, str] = {}
+        for entry in self.api_keys:
+            if ":" in entry:
+                key, role = entry.split(":", 1)
+                mapping[key] = role
+        return mapping
 
     embedder_provider: EmbedderProvider = EmbedderProvider.FAKE
     generator_provider: GeneratorProvider = GeneratorProvider.FAKE
@@ -77,6 +92,12 @@ class Settings(BaseSettings):
             raise ValueError("APP_REQUEST_TIMEOUT must be positive.")
         if self.log_level.upper() not in _VALID_LOG_LEVELS:
             raise ValueError(f"APP_LOG_LEVEL must be one of {sorted(_VALID_LOG_LEVELS)}.")
+        if not self.api_key_mapping:
+            raise ValueError("APP_API_KEYS must define at least one key:role pair.")
+        if self.rate_limit_max_requests <= 0:
+            raise ValueError("APP_RATE_LIMIT_MAX_REQUESTS must be positive.")
+        if self.rate_limit_window_sec <= 0:
+            raise ValueError("APP_RATE_LIMIT_WINDOW_SEC must be positive.")
         self._validate_rag()
         return self
 

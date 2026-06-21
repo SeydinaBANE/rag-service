@@ -56,6 +56,22 @@ def test_settings_invalid_log_level_fails_fast():
         Settings(log_level="verbose")
 
 
+def test_settings_api_key_mapping_parses_pairs():
+    settings = Settings()
+    assert settings.api_key_mapping["dev-key-operator"] == "operator"
+    assert settings.api_key_mapping["dev-key-viewer"] == "viewer"
+
+
+def test_settings_empty_api_keys_fails_fast():
+    with pytest.raises(ValueError, match="API_KEYS"):
+        Settings(api_keys=())
+
+
+def test_settings_invalid_rate_limit_fails_fast():
+    with pytest.raises(ValueError, match="RATE_LIMIT_MAX_REQUESTS"):
+        Settings(rate_limit_max_requests=0)
+
+
 def test_settings_fallback_claude_without_key_fails_fast(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(ValueError, match="GENERATOR_FALLBACK_PROVIDER"):
