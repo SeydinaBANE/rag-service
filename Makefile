@@ -1,10 +1,14 @@
-.PHONY: install lint format typecheck test cov run precommit load
+.PHONY: init install build lint format typecheck test cov run precommit load docker-up docker-down
 
 BASE_URL ?= http://localhost:8000
+
+init: install
 
 install:
 	uv sync --extra dev
 	uv run pre-commit install
+
+build: lint typecheck test
 
 lint:
 	uv run ruff check src tests
@@ -31,3 +35,9 @@ precommit:
 
 load:
 	BASE_URL=$(BASE_URL) k6 run load/k6/load_test.js
+
+docker-up:
+	docker compose up --build
+
+docker-down:
+	docker compose down
