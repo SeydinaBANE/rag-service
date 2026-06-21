@@ -17,6 +17,9 @@ src/app/
   adapters/    port implementations (lazy SDK import, retry/timeout) + fakes
   services/    orchestration (depends only on ports)
   api/         FastAPI app, security headers, /healthz + /readyz
+  middleware.py   per-IP sliding-window rate limiting on /rag/* routes
+  dependencies.py injectable FastAPI deps (get_principal: X-API-Key auth)
+  governance.py   RBAC, PII masking, idempotency guard, audit log
   config.py    pydantic-settings, fail-fast @model_validator
   container.py composition root (build_* factories)
 ```
@@ -45,6 +48,8 @@ Retrieval-augmented generation follows the same hexagonal pattern: four ports
 fakes by default, real adapters behind a lazy SDK import. The query pipeline is
 retrieve (candidate pool) → rerank → generate.
 
+Both `/rag/*` routes require an `X-API-Key` header (see Security below).
+
 ```
 POST /rag/index   {"documents": [{"doc_id": "d1", "text": "..."}]}  -> {"indexed_chunks": N}
 POST /rag/query   {"question": "...", "top_k": 4}                   -> {"answer": "...", "sources": [...]}
@@ -52,6 +57,25 @@ POST /rag/query   {"question": "...", "top_k": 4}                   -> {"answer"
 
 `/rag/index` accepts an optional `Idempotency-Key` header; replaying the same key is a no-op
 (`indexed_chunks: 0`), preventing duplicate chunks on retried indexing.
+
+## Security
+
+The `/rag/*` routes are hardened (offline-friendly defaults, override in production):
+
+- **Authentication** — every request must send an `X-API-Key` header. Keys map to roles via
+  `APP_API_KEYS` (a JSON list of `"key:role"` pairs; defaults to `dev-key-viewer:viewer` and
+  `dev-key-operator:operator`). Missing header → `422`, unknown key → `401`.
+- **Authorization (RBAC)** — `/rag/query` needs `read` (`viewer` or `operator`); `/rag/index`
+  needs `write` (`operator`). A denied role → `403`. Each index call is recorded in an
+  append-only audit log.
+- **Rate limiting** — per-IP sliding window on the RAG routes
+  (`APP_RATE_LIMIT_MAX_REQUESTS`/`APP_RATE_LIMIT_WINDOW_SEC`, default 60 per 60s); exceeding
+  it → `429`.
+
+```bash
+curl -X POST localhost:8000/rag/query -H "X-API-Key: dev-key-viewer" \
+  -H "Content-Type: application/json" -d '{"question": "..."}'
+```
 
 Offline by default (`APP_EMBEDDER_PROVIDER=fake`, `APP_GENERATOR_PROVIDER=fake`). For real
 backends, install the extra (`uv sync --extra rag`) and switch providers:
