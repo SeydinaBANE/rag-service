@@ -4,6 +4,7 @@ BASE_URL ?= http://localhost:8000
 
 install:
 	uv sync --extra dev
+	uv run pre-commit install
 
 lint:
 	uv run ruff check src tests
