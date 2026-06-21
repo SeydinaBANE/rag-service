@@ -6,6 +6,7 @@ from app.config import (
     GreeterProvider,
     RerankerProvider,
     Settings,
+    get_settings,
 )
 
 
@@ -53,3 +54,18 @@ def test_settings_cohere_without_key_fails_fast(monkeypatch):
 def test_settings_invalid_log_level_fails_fast():
     with pytest.raises(ValueError, match="LOG_LEVEL"):
         Settings(log_level="verbose")
+
+
+def test_get_settings_returns_cached_singleton():
+    get_settings.cache_clear()
+    try:
+        assert get_settings() is get_settings()
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_settings_cache_clear_yields_fresh_instance():
+    first = get_settings()
+    get_settings.cache_clear()
+    assert get_settings() is not first
+    get_settings.cache_clear()

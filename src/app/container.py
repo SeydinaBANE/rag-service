@@ -20,6 +20,7 @@ from app.config import (
     GreeterProvider,
     RerankerProvider,
     Settings,
+    get_settings,
 )
 from app.ports.embedder import EmbedderPort
 from app.ports.generator import GeneratorPort
@@ -99,7 +100,7 @@ class Container:
 
 
 def build_container(settings: Settings | None = None) -> Container:
-    resolved = settings or Settings()
+    resolved = settings or get_settings()
     greeter = build_greeter(resolved)
     return Container(
         settings=resolved,

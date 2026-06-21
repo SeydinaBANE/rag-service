@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from enum import StrEnum
+from functools import lru_cache
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -100,3 +101,9 @@ class Settings(BaseSettings):
             self.cohere_api_key or os.getenv("CO_API_KEY")
         ):
             raise ValueError("APP_RERANKER_PROVIDER=cohere requires APP_COHERE_API_KEY.")
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    """Single cached Settings instance; call ``get_settings.cache_clear()`` to reset in tests."""
+    return Settings()
