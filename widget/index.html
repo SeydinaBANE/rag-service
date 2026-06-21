@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RAG widget — demo</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; padding: 48px; color: #1a1a2e; }
+      code { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h1>RAG widget — demo</h1>
+    <p>
+      The chat launcher sits in the corner. It queries <code>POST /rag/query</code> on the
+      configured API. Start the backend with <code>make run</code> first.
+    </p>
+
+    <!-- Use a read-only (viewer) key here: it ships to the browser. -->
+    <rag-chat
+      api-url="http://localhost:8000"
+      api-key="dev-key-viewer"
+      primary-color="#6C5CE7"
+      position="bottom-right"
+      lang="fr"
+      top-k="4"
+    ></rag-chat>
+
+    <!-- In production, load the minified bundle instead: -->
+    <!-- <script src="https://cdn.example.com/rag.min.js"></script> -->
+    <script type="module" src="./rag.js"></script>
+  </body>
+</html>

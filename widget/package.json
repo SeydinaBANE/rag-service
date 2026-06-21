@@ -1,0 +1,14 @@
+{
+  "name": "rag-widget",
+  "version": "0.1.0",
+  "description": "RAG Service — widget de chat embarquable (Web Component vanilla)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild rag.js --bundle --minify --format=iife --outfile=dist/rag.min.js",
+    "dev": "esbuild rag.js --bundle --servedir=. --outfile=dist/rag.min.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
